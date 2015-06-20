@@ -1,7 +1,7 @@
 """
 The data is downloaded from https://mapzen.com/data/metro-extracts.
-Search by "london, england" and select OSM XML. The unzipped raw data
-is called london_england.osm
+Search by "manchester, england" and select OSM XML. The unzipped raw data
+is called manchester_england.osm
 """
 from datetime import datetime
 import xml.etree.cElementTree as ET
@@ -251,8 +251,8 @@ def process_map(file_in, pretty=False, sample_size=None, mongoimport=True):
 if __name__ == '__main__':
     tic = datetime.now()
 
-    # process_map('manchester_england.osm', sample_size=100000)
-    process_map('manchester_england.osm', sample_size=None)
+    process_map('manchester_england.osm', sample_size=100000)
+    # process_map('manchester_england.osm', sample_size=None)
 
     toc = datetime.now()
 
