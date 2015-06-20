@@ -1,0 +1,5 @@
+Open Street Map: https://www.openstreetmap.org/relation/146656
+Download link: https://s3.amazonaws.com/metro-extracts.mapzen.com/manchester_england.osm.bz2
+Description: The manchester_england.osm file contains the OpenStreetMap data of the Greater Manchester area.
+Reason of choice: I chose this area because the osm file has the appropriate file size (~300MB) and I am living in UK so that I am more familiar with basic info of the dataset and can sense check the results.
+
