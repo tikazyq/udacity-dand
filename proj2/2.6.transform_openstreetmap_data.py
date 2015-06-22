@@ -16,10 +16,10 @@ lower = re.compile(r'^([a-z]|_)*$')
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
 problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
 
+# related keys that should be nested in the "created" element.
 CREATED = ["version", "changeset", "timestamp", "user", "uid"]
-INFO = ['website']
-TAG_KEY_PREFIXES = ['addr', 'naptan']
 
+# mapping regular expressions of predefined source categories
 SOURCE_MAPPING = {
     'Bing': 'bing',
     'Yahoo': 'yahoo',
@@ -40,6 +40,10 @@ SOURCE_MAPPING = {
 
 
 def trans_pos(k, v, node):
+    """
+    Transform latitude (lat) and longitude (lon) into position (pos).
+    Return the transformed node object.
+    """
     if node.get('pos') is None:
         node['pos'] = []
     if k == 'lat':
@@ -50,12 +54,17 @@ def trans_pos(k, v, node):
 
 
 def trans_attr(element, node):
+    """
+    Transform attributes of node element.
+    Return the transformed node object.
+    """
     for k, v in element.attrib.iteritems():
         if k in CREATED:
             if node.get('created') is None:
                 node['created'] = {}
             node['created'][k] = v
         elif k in ['lat', 'lon']:
+            # Transform latitudes and longitudes
             node = trans_pos(k, v, node)
         else:
             node[k] = v
@@ -63,15 +72,28 @@ def trans_attr(element, node):
 
 
 def trans_tags(element, node):
+    """
+    Transform tag elements inside the node element.
+    Return the transformed node object.
+    """
     tags = element.findall('tag')
+
+    # Iterate through all tag elements inside the node element and perform
+    # the transformation.
     for tag in tags:
         k = tag.attrib.get('k')
         v = tag.attrib.get('v')
+
+        # Some tag key is delimited by ":", which is transformed into a
+        # nested data structure.
         ks = k.split(':')
-        _k = ks[0]
+        _k = ks[0]  # first level of tag key
+
+        # If the key has 2 or move levels, perform relevant transformation.
+        # Otherwise, assign the value to the key, i.e. flat structure.
         if len(ks) >= 2:
             if _k == 'addr':
-                _k = 'address'
+                _k = 'address'  # rename first level of key 'addr' to 'address'
 
             if node.get(_k) is None:
                 node[_k] = {}
@@ -91,9 +113,6 @@ def trans_tags(element, node):
             else:
                 pass
 
-        elif k in ['lat', 'lon']:
-            node = trans_pos(k, v, node)
-
         else:
             node[k] = v
 
@@ -110,8 +129,8 @@ def trans_tags(element, node):
 
 def unify_source(source):
     """
-    Unify sources data and transform into consistent fashion.
-    :param source:
+    Unify sources data and transform into consistent fashion, i.e. source category.
+    Return the transformed source category list.
     """
     _source_cat = set()
     if isinstance(source, str):
@@ -119,21 +138,25 @@ def unify_source(source):
         _source = problemchars.sub(' ', _source).strip()
 
         for cat, pat in SOURCE_MAPPING.iteritems():
-            # If one of the source pattern matches with the source category,
-            # add it to the array of source category.
+
             if isinstance(pat, str):
-                _pat = [pat]
+                _pat = [pat]  # set _pat to a list if it is str type
+
             elif isinstance(pat, list):
                 _pat = pat
+
             else:
                 continue
 
             for p in _pat:
+                # If one of the source pattern matches with the source category,
+                # add it to the array of source category.
                 if re.search(p, _source) is not None:
                     _source_cat.add(cat)
 
     elif isinstance(source, dict):
         for k, v in source.iteritems():
+            # If the source is type dict, add the recursive
             _source_cat.add(unify_source(v))
 
     return list(_source_cat)
@@ -142,8 +165,6 @@ def unify_source(source):
 def unify_postcode(postcode):
     """
     Transform inconsistent postcode into consistent postcode.
-    :param postcode:
-    :return:
     """
     _postcode = postcode.upper().strip()
     _postcode = problemchars.sub('', _postcode)
@@ -158,6 +179,10 @@ def unify_postcode(postcode):
 
 
 def unify_amenity(amenity):
+    """
+    Make amenity consistent by stripping out the underscores and
+    leading or trailing whitespaces.
+    """
     _amenity = amenity.lower().strip()
     _amenity = problemchars.sub(' ', _amenity).strip()
     _amenity = _amenity.replace('_', ' ').strip()
@@ -173,6 +198,10 @@ def is_basic_node(node):
 
 
 def shape_element(element):
+    """
+    Transform XML element into JSON object if the tag name is "node" or "way".
+    :param element: XML Element
+    """
     node = {}
     if element.tag == "node" or element.tag == "way":
         if element.tag == 'node':
@@ -209,12 +238,18 @@ def shape_element(element):
 
 
 def run_mongoimport(file_in):
+    """
+    Use subprocess to run the shell command to import the output JSON
+    file into MongoDB database.
+    """
     import subprocess
 
+    # remove all documents in the corresponding Mongo collection
     col_name = file_in.split('.')[0]
     cmd = 'mongo --eval "db.getMongo().getDB(\'osm\').manchester_england.remove({});"'
     subprocess.call(cmd, shell=True)
 
+    # import the JSON file into the corresponding Mongo collection
     cmd = '''
     mongoimport -h localhost \
     -d osm \
@@ -225,6 +260,13 @@ def run_mongoimport(file_in):
 
 
 def process_map(file_in, pretty=False, sample_size=None, mongoimport=True):
+    """
+    Process the OSM data and transform into JSON file.
+    :param file_in: input .osm file name.
+    :param pretty: whether to output pretty print the JSON object.
+    :param sample_size: number of elements to process.
+    :param mongoimport: whether to import the .json file into local MongoDB.
+    """
     file_out = "{0}.json".format(file_in)
 
     with codecs.open(file_out, "wb") as fo:
@@ -249,12 +291,12 @@ def process_map(file_in, pretty=False, sample_size=None, mongoimport=True):
 
 
 if __name__ == '__main__':
-    tic = datetime.now()
+    tic = datetime.now()  # start timing
 
-    process_map('manchester_england.osm', sample_size=100000)
-    # process_map('manchester_england.osm', sample_size=None)
+    # process_map('manchester_england.osm', sample_size=100000)
+    process_map('manchester_england.osm', sample_size=None)
 
-    toc = datetime.now()
+    toc = datetime.now()  # stop timing
 
     print 'Total processed time: {0} seconds'.format((toc - tic).total_seconds())
 
