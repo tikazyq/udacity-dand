@@ -1,7 +1,7 @@
 Prosper Loan Data Exploration by Yeqing Zhang
 ========================================================
 
-```{r echo = F, warning = F, message=FALSE, warning=FALSE, packages}
+```{r echo = F, warning = F, message=F, packages}
 # Load all of the packages that you end up using
 # in your analysis in this code chunk.
 
@@ -14,14 +14,16 @@ library(gridExtra)
 library(scales)
 library(reshape2)
 library(dplyr)
+library(GGally)
+library(memisc)
 ```
 
-```{r echo = F, warning = F, Load_the_Data}
+```{r echo = F, warning = F, message=F,Load_the_Data}
 # Load the Data
 df <- read.csv('prosperLoanData.csv')
 ```
 
-```{r echo=TRUE, Profile_the_Data}
+```{r echo=F, warning=F, message=F, message=F, Profile_the_Data}
 # number of observations and columns of dataset
 dim(df)
 
@@ -32,25 +34,29 @@ summary(df)
 str(df)
 ```
 
+# Introduction
+
+This data exploration is on a large dataset consisted of 113,937 loans from [Prosper Marketplace](https://www.prosper.com/). The major goal of this exercise is to analyze what factors and how they affect the [Prosper Score](https://www.prosper.com/help/topics/general-prosper_score/). Prosper Score ranges from 1 to 11 and is an indicator of the risk of Prosper borrower listings (the highest risk or worst is 1). I will start by looking at the distribution of each variable that I am interested. I will further explore the relationships between different variables and how they correlate with Prosper Score. Finally a model based on the findings will be created in order to predict the Prosper Score.
+
 # Univariate Plots Section
 
 ## Prosper Score 
 
-```{r, echo=F, warning=F, ProsperScore_hist}
+```{r, echo=F, warning=F, message=F, ProsperScore_hist}
 qplot(x = ProsperScore, data = df) + 
   scale_x_discrete()
 ```
 
 The Prosper Score seems to be mostly from 4 to 8. The score with the largest population is 4. 
 
-```{r, echo=F, warning=F, CreditGrade_hist}
+```{r, echo=F, warning=F, message=F, CreditGrade_hist}
 qplot(x = CreditGrade, data = df) + 
   scale_x_discrete()
 ```
 
 There are quite a lot of missing values (empty values) in the credit grade.
 
-```{r, echo=F, warning=F, CreditGrade_hist2, warning=F}
+```{r, echo=F, warning=F, message=F, CreditGrade_hist2, warning=F}
 qplot(x = CreditGrade, data = subset(df, CreditGrade != '')) + 
   scale_x_discrete()
 ```
@@ -60,20 +66,20 @@ After removing the missing category, it is shown that the number of loans increa
 
 ## Loan Amount
 
-```{r, echo = F, warning = F, LoanOriginalAmount_summary}
+```{r, echo = F, warning = F, message=F,LoanOriginalAmount_summary}
 ## 
 summary(df$LoanOriginalAmount)
 ```
 
 The median value for the original loan amount is 6500, mean value is 8337. 
 
-```{r echo = F, warning = F, LoanOriginalAmount_hist}
+```{r echo = F, warning = F, message=F,LoanOriginalAmount_hist}
 qplot(x = LoanOriginalAmount, data = df)
 ```
 
 It is noticed that the majority of the loans have below 10000. And it seems that the distribution is multi-modal, with multiple peaks at 4500, 10000, 15000, 20000, 25000. Let's transform the plot into a better understandable plot. 
 
-```{r echo = F, warning = F, loan_original_amount_hist}
+```{r echo = F, warning = F, message=F,loan_original_amount_hist}
 qplot(x = LoanOriginalAmount, data = df, binwidth=200) + 
   scale_y_log10(breaks = c(1, 10, 1000, 10000)) + 
   scale_x_continuous(breaks = seq(0, 40000, 5000)) 
@@ -83,41 +89,41 @@ It shows that with the increase of LoanOriginalAmount, number of loans decreases
 
 
 ## Income
-```{r, echo = F, warning = F, inome_range_trans}
+```{r, echo = F, warning = F, message=F,inome_range_trans}
 # Transform IncomeRange levels to a more sensible order
 df$IncomeRange <- factor(df$IncomeRange, 
                          levels = c('Not employed', '$0', '$1-24,999', '$25,000-49,999', '$50,000-74,999', '$75,000-99,999', '$100,000+', 'Not displayed'))
 ```
 
 
-```{r, echo=F, warning=F, income_range_hist}
+```{r, echo=F, warning=F, message=F, income_range_hist}
 qplot(x = IncomeRange, data = df) + 
   theme(axis.text.x = element_text(angle = 90))
 ```
 
 Most of the borrowers have annual income range of $25K-$75K. 
 
-```{r, echo = F, warning = F, DebtToIncomeRatio_hist}
+```{r, echo = F, warning = F, message=F,DebtToIncomeRatio_hist}
 qplot(x = DebtToIncomeRatio, 
       # remove NA value to make plot nicer
       data = subset(df, !is.na(DebtToIncomeRatio))) + 
   scale_x_log10(breaks = c(0.01, 0.2, 1))
 ```
 
-```{r, echo=T, DebtToIncomeRatio_summary}
+```{r, echo=F, DebtToIncomeRatio_summary}
 summary(df$DebtToIncomeRatio)
 ```
 
 DebtToIncomeRatio shows a near-normal distribution on log scale, peaking at 0.2.
 
-```{r, echo = F, warning = F, StatedMonthlyIncome_hist}
+```{r, echo = F, warning = F, message=F,StatedMonthlyIncome_hist}
 qplot(x = StatedMonthlyIncome, data = df, binwidth = 0.1) + 
   scale_x_log10(breaks = c(0.1, 100, 5000, 1750000))
 ```
 
 StatedMonthlyIncome presents a normal distribution on the log scale. 
 
-```{r, echo=T, StatedMonthlyIncome_summary}
+```{r, echo=F, StatedMonthlyIncome_summary}
 summary(df$StatedMonthlyIncome)
 ```
 
@@ -125,7 +131,7 @@ The StatedMonthlyIncome's median is 4667 and mean value is 5608.
 
 
 ## Occupation and Employment
-```{r, echo = F, warning = F, EmploymentStatus_trans}
+```{r, echo = F, warning = F, message=F,EmploymentStatus_trans, fig.width=12}
 # reorder EmploymentStatus to a more sensible order
 df$EmploymentStatus <- factor(
   df$EmploymentStatus, 
@@ -135,13 +141,15 @@ df$EmploymentStatus <- factor(
 ```
 
 
-```{r, occupation_hist}
+```{r, echo=F, warning=F, message=F, occupation_hist}
 qplot(x = Occupation, data = df) + 
   # adjust the x label text to vertical direction
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-```{r, echo = F, warning = F, employment_status_hist, fig.width=15}
+The majority of loans are from "Other" which indicates the distribution of the occupation is long-tail. 
+
+```{r, echo = F, warning = F, message=F,employment_status_hist, fig.width=15}
 qplot(x = EmploymentStatus, data = df) + 
   # adjust the x label text to vertical direction
   theme(axis.text.x = element_text(angle = 90))
@@ -152,49 +160,49 @@ The majority of the loans are from "Employed" and "Full-Time" browers.
 
 ## Interest Rate and Return
 
-```{r, warning = F, BorrowerAPR_hist}
+```{r, echo=F, warning = F, message=F,BorrowerAPR_hist}
 qplot(x = BorrowerAPR, data = df) + 
   scale_x_continuous(breaks = seq(0, 0.4, 0.05))
 ```
 
 BorrowerAPR presents a distribution similar to a bell shape, peaking at around 0.18. There are also other 3 spikes at 0.09, 0.29, 0.37. Let's do a close look.
 
-```{r, warning = F, BorrowerAPR_hist2}
+```{r, echo=F, warning = F, message=F,BorrowerAPR_hist2}
 qplot(x = BorrowerAPR, data = df, binwidth = 0.002) + 
   scale_x_continuous(breaks = seq(0, 0.4, 0.05))
 ```
 
 A finer tuned histogram shows a similar trend as above but with a prominent peak at 0.37. I wonder why there are so many loans with BorrowAPR at 37%? Also, the distribution seems to be multi-modal, particularly peaked at the low-level 0.09. 
 
-```{r, warning = F, LenderYield_hist2}
+```{r, echo=F,warning = F, message=F,LenderYield_hist2}
 qplot(x = LenderYield, data = df)
 ```
 
 
-```{r, warning = F, estimated_effective_yield_hist}
+```{r, echo=F,warning = F, message=F,estimated_effective_yield_hist}
 qplot(x = EstimatedEffectiveYield, data = df)
 ```
 
-```{r, warning = F, estimated_effective_yield_hist2}
+```{r, echo=F,warning = F, message=F,estimated_effective_yield_hist2}
 qplot(x = EstimatedEffectiveYield, data = df, binwidth = 0.0025)
 ```
 
 
-```{r, warning = F, estimated_loss_hist}
+```{r, echo=F,warning = F, message=F,estimated_loss_hist}
 qplot(x = EstimatedLoss, data = df)
 ```
 
-```{r, warning = F, estimated_loss_hist2}
+```{r, echo=F,warning = F, message=F,estimated_loss_hist2}
 qplot(x = EstimatedLoss, data = df, binwidth =0.0025)
 ```
 
-```{r, warning = F, estimated_return_hist}
+```{r, echo=F,warning = F, message=F,estimated_return_hist}
 qplot(x = EstimatedReturn, data = df)
 ```
 
 It appears that the Estimated Return poses a normal distribution, peaking at 0.1 and with some values below 0. 
 
-```{r, echo = F, warning = F, estimated_return_hist2}
+```{r, echo = F, warning = F, message=F,estimated_return_hist2}
 qplot(x = EstimatedReturn, data = df, binwidth = 0.0025) + 
   coord_cartesian(xlim = c(0, 0.2)) + 
   scale_x_continuous(breaks = seq(0, 0.2, 0.02))
@@ -205,20 +213,20 @@ The transformed EstimatedReturn seems to be tri-modal peaking at 0.08, 0.11, 0.1
 
 ## Credit History
 
-```{r, total_prosper_loans_hist}
+```{r, echo=F,total_prosper_loans_hist}
 qplot(x = TotalProsperLoans, data = df)
 ```
 
 The number of loans appears to be exponentially decreasing with increase of TotalProsperLoans.
 
-```{r, TotalProsperLoans_summary}
+```{r, echo=F,TotalProsperLoans_summary}
 summary(df$TotalProsperLoans)
 print(paste('% NAs: ', sum(is.na(df$TotalProsperPaymentsBilled)) / nrow(df), ''))
 ```
 
 The summary shows there are 91852 NA values, about 80% of total observations. This means the majority of the borrowers are first-time borrowers on Prosper. 
 
-```{r, total_prosper_loans_hist2}
+```{r, echo=F,total_prosper_loans_hist2}
 qplot(x = TotalProsperLoans, data = subset(df, !is.na(TotalProsperLoans))) + 
   scale_y_log10() + 
   scale_x_discrete()
@@ -226,11 +234,11 @@ qplot(x = TotalProsperLoans, data = subset(df, !is.na(TotalProsperLoans))) +
 
 Above plot confirms the negative exponential relationship.
 
-```{r, TotalProsperPaymentsBilled_hist}
+```{r, echo=F,TotalProsperPaymentsBilled_hist}
 qplot(x = TotalProsperPaymentsBilled, data = df)
 ```
 
-```{r, TotalProsperPaymentsBilled_hist2}
+```{r, echo=F,TotalProsperPaymentsBilled_hist2}
 qplot(x = TotalProsperPaymentsBilled, data = df,
       binwidth = 1) + 
   scale_x_continuous(breaks = seq(0, 100, 5)) + 
@@ -239,18 +247,18 @@ qplot(x = TotalProsperPaymentsBilled, data = df,
 
 The above plot shows that the payment bills seem to be quite strange. It seems to be consisted of a couple of exponential decreasing distributions starting from 1, 7, 11, 35. There is a prominent spike at 35. 
 
-```{r, TotalProsperPaymentsBilled_data}
+```{r, echo=F,TotalProsperPaymentsBilled_data}
 head(na.omit(df$TotalProsperPaymentsBilled), 1000)
 ```
 
 
-```{r, TotalProsperPaymentsBilled_summary}
+```{r, echo=F,TotalProsperPaymentsBilled_summary}
 summary(df$TotalProsperPaymentsBilled)
 ```
 
 The summary shows there are 91852 NA values, about 80% of total observations. This means the majority of 
 
-```{r, echo = F, warning = F, date_conversion}
+```{r, echo = F, warning = F, message=F,date_conversion}
 # convert date columns to type Date
 df$LoanOriginationDate.date <- as.Date(df$LoanOriginationDate)
 df$ClosedDate.date <- as.Date(df$ClosedDate)
@@ -259,7 +267,7 @@ df$DateCreditPulled.date <- as.Date(df$DateCreditPulled)
 ```
 
 
-```{r, echo = F, warning = F, CreditLines_hist}
+```{r, echo = F, warning = F, message=F,CreditLines_hist}
 grid.arrange(
   qplot(x = CreditScoreRangeLower, data = df),
   qplot(x = CreditScoreRangeUpper, data = df),
@@ -276,7 +284,7 @@ grid.arrange(
 
 ```
 
-```{r, echo = F, warning = F, Delinquencies_hist}
+```{r, echo = F, warning = F, message=F,Delinquencies_hist}
 grid.arrange(
   qplot(x = CurrentDelinquencies, data = df, binwidth = 0.02) + scale_x_log10(),
   qplot(x = AmountDelinquent, data = df, binwidth = 0.02) + scale_x_log10(),
@@ -291,7 +299,7 @@ It shows that CurrentDelinquencies and DelinquenciesLast7Years present decreasin
 
 ## Date
 
-```{r, LoanDate_hist}
+```{r, echo=F, warning=F, message=F, LoanDate_hist}
 
 p1 = qplot(df$LoanOriginationDate.date, binwidth = 7) 
 p2 = qplot(df$ClosedDate.date, binwidth = 7)
@@ -301,7 +309,7 @@ grid.arrange(p1, p2, ncol = 1)
 
 The time series plot shows the loans increase since 2006 and stumbled to 0 since end of 2008 (due to the finacial crisis). It recovers to increase since the end of 2009 and had a significant jump at the beginning of 2013. 
 
-```{r, echo = F, warning = F, loan_status_hist}
+```{r, echo = F, warning = F, message=F,loan_status_hist}
 qplot(x = LoanStatus, data = df) + 
   # adjust the x label text to vertical direction
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
@@ -347,7 +355,7 @@ I also adjusted the bin width for a few histograms including LoanOriginalAmount,
 # Bivariate Plots Section
 
 ## Correlaion
-```{r, echo=F, warning=F, corr_helper}
+```{r, echo=F, warning=F, message=F, corr_helper}
 # Correlation test helper function
 # Given x (string) and y (string) of data (data.frame) returns the estimate from cor.test
 bivar_cor <- function (x, y, data) {
@@ -366,7 +374,7 @@ bivar_cor_arr <- function (target_var, test_vars, data) {
 
 ```
 
-```{r, echo=F, warning=F, correlation_test}
+```{r, echo=F, warning=F, message=F, correlation_test}
 # Helper function to get a correlation matrix given a dataset
 get_cor <- function(data) {
   vars <- c(
@@ -398,7 +406,7 @@ get_cor(df)
 
 ```
 
-```{r, echo = F, warning = F, BivariatePlots_helper}
+```{r, echo = F, warning = F, message=F,BivariatePlots_helper}
 # Helper function to draw boxplot
 bivar_boxplot <- function (x, y, data) {
   p = ggplot(aes_string(x = x, y = y),
@@ -423,7 +431,7 @@ The correlation matrix shows that ProsperScore has strong negative correlation w
 
 A quick preview of these correlation is plotted as below. 
 
-```{r, echo = F, warning = F, PS_v_Income1, fig.width=10}
+```{r, echo = F, warning = F, message=F,PS_v_Income1, fig.width=10}
 grid.arrange(
   bivar_boxplot('as.factor(ProsperScore)', 'BorrowerAPR', data = df),
   bivar_boxplot('as.factor(ProsperScore)', 'LenderYield', data = df),
@@ -436,7 +444,7 @@ grid.arrange(
 
 The boxplots visually present that ProsperScore is negatively correlated with BorrowerAPR, LenderYield, EstimatedEffectiveYield, EstimatedLoss, EstimatedReturn. This makes sense as it is intuitive for lenders to get higher return at higher risk (lower ProsperScore). 
 
-```{r, echo=F, warning=F, PS_v_BorrowerAPR_scatter}
+```{r, echo=F, warning=F, message=F, PS_v_BorrowerAPR_scatter}
 bivar_scatter_plot('ProsperScore', 'BorrowerAPR', data = df,
                    alpha = 0.02, position = 'jitter') + 
   scale_x_continuous(breaks = seq(0, 11)) +
@@ -447,20 +455,24 @@ bivar_scatter_plot('ProsperScore', 'BorrowerAPR', data = df,
 The overall BorrowerAPR posed a decreasing trend with increase of ProsperScore. However, it is noticed that there are a few dense area of BorrowerAPR around 0.36 for ProsperScore within 2-5. What are those loans and why they stay close to 0.36? I'd like to plot the histograms for each ProsperScore to highlight this pattern.
 
 
-```{r, echo=F, warning=F, PS_v_BorrowerAPR_hist, fig.width=12}
+```{r, echo=F, warning=F, message=F, PS_v_BorrowerAPR_hist, fig.width=12}
 ggplot(data = df) + 
   geom_histogram(aes(x = BorrowerAPR), binwidth = 0.01) + 
   scale_x_continuous(breaks = seq(0, 0.4, 0.1)) + 
   facet_wrap(~ ProsperScore, scales = 'free_y', ncol = 3)
 ```
 
-The above plots confirms that there are quite many loans (ProsperScore <= 5) are at BorrowerAPR ~ 0.35. What are they? Also, for loans with ProsperScore in 6-7, the BorrowersAPR distribution appears to be bimodal or multimodal peaking at 0.2 and 0.3.
+The above plots confirms that there are quite many loans (ProsperScore <= 5) are at BorrowerAPR ~ 0.35. What are they? Also, for loans with ProsperScore in 6-7, the BorrowersAPR distribution appears to be bimodal or multimodal peaking at 0.2 and 0.3. I'm going to investigate a little more on those odd loans.
 
-```{r, echo=F, warning=F, PS_v_BorrowerAPR_oddity}
+```{r, echo=F, warning=F, message=F, PS_v_BorrowerAPR_oddity}
 # subset data with BorrowerAPR close to 0.36 and ProsperScore within 2-5.
 df.odd <- subset(df, 0.35 <= BorrowerAPR & BorrowerAPR <= 0.37 & 2 <= ProsperScore & ProsperScore <= 5)
 table(df.odd$BorrowerAPR)
+```
 
+There are 3410 loans with BorrowerAPR at 0.35797 and 1531 loans at 0.35643.
+
+```{r, echo=F, warning=F, message=F, PS_v_BorrowerAPR_oddity2}
 grid.arrange(
   qplot(df.odd$LoanOriginationDate.date) + 
     xlim(as.Date('2010-01-01'), as.Date('2014-01-01')) + 
@@ -474,7 +486,7 @@ grid.arrange(
 
 It appears that these loans are mainly within period of 2011-2013. Did something happen after the beginnig of 2013 which led to the reduction?
 
-```{r, echo=F, warning=F, PS_v_EstimatedReturn_scatter}
+```{r, echo=F, warning=F, message=F, PS_v_EstimatedReturn_scatter}
 bivar_scatter_plot('ProsperScore', 'EstimatedReturn', data = df,
                    # alpha = 0.02, position = 'identity') + 
                    alpha = 0.02, position = 'jitter') + 
@@ -484,8 +496,10 @@ bivar_scatter_plot('ProsperScore', 'EstimatedReturn', data = df,
   stat_smooth(method = 'lm')
 ```
 
+The relationship between ProsperScore and EstimatedReturn appears to be similar to the one between ProsperScore and BorrowerAPR, i.e. negative correlation.  
 
-```{r echo = F, warning = F, PS_v_IncomeRange}
+
+```{r echo = F, warning = F, message=F,PS_v_IncomeRange}
 bivar_boxplot(x = 'IncomeRange', y = 'ProsperScore', data = df) + 
   theme(axis.text.x = element_text(angle = 90)) + 
   scale_y_continuous(breaks = seq(0, 12, 1))
@@ -493,7 +507,7 @@ bivar_boxplot(x = 'IncomeRange', y = 'ProsperScore', data = df) +
 
 IncomeRange lower than or equal to $50K (including "Not employed") get median value of ProsperScore 5. $50K-$100K gets 6 and over $100K gets 7. 
 
-```{r echo = F, warning = F, PS_v_StatedMonthlyIncome}
+```{r echo = F, warning = F, message=F,PS_v_StatedMonthlyIncome}
 bivar_boxplot(x = 'as.factor(ProsperScore)', y = 'StatedMonthlyIncome', data = df) + 
   scale_y_log10(breaks = c(1000, 5000, 10000, 20000)) + 
   coord_cartesian(ylim = c(1000, 20000))
@@ -501,7 +515,7 @@ bivar_boxplot(x = 'as.factor(ProsperScore)', y = 'StatedMonthlyIncome', data = d
 
 The boxplot shows that the median value of StatedMonthlyIncome tend to be higher with increase of the Prosper Score. Yet there is only one oddity: ProsperScore of 1 has higher income than Score 2 and even 5. This could be due to that some people lied about their income which led to a low credit ratings and thus a low ProsperScore. The median values of StatedMonthlyIncome against ProsperScore appears to be an exponential distribution.
 
-```{r, echo=F, warning=F, PS_v_StatedMonthlyIncome2}
+```{r, echo=F, warning=F, message=F, PS_v_StatedMonthlyIncome2}
 ggplot(data = df,
        aes(x = ProsperScore, y = StatedMonthlyIncome)) + 
   geom_line(stat = 'summary', fun.y = median) + 
@@ -512,7 +526,7 @@ ggplot(data = df,
 
 The above plot shows the median value of StatedMonthlyIncome presents an increasing trend against ProsperScore.
 
-```{r, echo = F, warning = F, PS_v_StatedMonthlyIncome3}
+```{r, echo = F, warning = F, message=F,PS_v_StatedMonthlyIncome3}
 qplot(x = as.factor(ProsperScore), y = StatedMonthlyIncome, 
       data = subset(df, !is.na(StatedMonthlyIncome & !is.na(ProsperScore))), 
       geom = 'boxplot') + 
@@ -524,14 +538,14 @@ qplot(x = as.factor(ProsperScore), y = StatedMonthlyIncome,
 
 Above plot shows the same plot as the previous one but with split of IncomeVerifiable. It is noticed that the oddity of Prosper 1 still exists even in the IncomeVerifiable = TRUE subset. This means there are other factors that contribute to this oddity. 
 
-```{r, echo = F, warning = F, PS_v_DebtToIncomeRatio}
+```{r, echo = F, warning = F, message=F,PS_v_DebtToIncomeRatio}
 bivar_boxplot('as.factor(ProsperScore)', 'DebtToIncomeRatio', data = df) + 
   coord_cartesian(ylim = c(0, 1))
 ```
 
 It makes sense that DebtToIncomeRatio is negatively correlated with ProsperScore.
 
-```{r, echo = F, warning = F, PS_v_CreditHistory}
+```{r, echo = F, warning = F, message=F,PS_v_CreditHistory}
 grid.arrange(
   bivar_boxplot('as.factor(ProsperScore)', 'TotalProsperLoans', data = df) + 
     coord_cartesian(ylim = c(0, 3)),
@@ -544,7 +558,7 @@ grid.arrange(
 )
 ```
 
-```{r, echo = F, warning = F, PS_v_CreditHistory2}
+```{r, echo = F, warning = F, message=F,PS_v_CreditHistory2}
 grid.arrange(
   bivar_boxplot('as.factor(ProsperScore)', 'TotalCreditLinespast7years', data = df),
   bivar_boxplot('as.factor(ProsperScore)', 'OpenRevolvingAccounts', data = df),
@@ -565,13 +579,13 @@ It seems that the TotalProsperPaymentsBills, CreditScoreRangeLower, CreditScoreR
 
 ## LoanOriginalAmount
 
-```{r, echo=F, warning=F, PS_v_LoanOriginalAmount_box}
+```{r, echo=F, warning=F, message=F, PS_v_LoanOriginalAmount_box}
 bivar_boxplot('as.factor(ProsperScore)', 'LoanOriginalAmount', data = df)
 ```
 
 In general, the median values of LoanOriginalAmount shows that the LoanOriginalAmount increases with increase of ProsperScore. This makes sense as lenders could be cautious with lending larger amount with larger risks (i.e. low ProsperScore). The NA values for loans before 2009, which led to the question that why those loans have much lower LoanOriginalAmount with median value around 4000?
 
-```{r, echo=F, warning=F, BorrowerAPR_v_LoanOriginalAmount_scatter}
+```{r, echo=F, warning=F, message=F, BorrowerAPR_v_LoanOriginalAmount_scatter}
 bivar_scatter_plot('BorrowerAPR', 'LoanOriginalAmount', data = df,
                    alpha = 0.05) + 
   scale_x_continuous(breaks = seq(0, 0.5, 0.05)) + 
@@ -580,13 +594,15 @@ bivar_scatter_plot('BorrowerAPR', 'LoanOriginalAmount', data = df,
 
 With the increase of LoanOriginalAmount, the width of BorrowerAPR is narrowing down from 0.05-0.40 for $1K to 0.10-0.20 at $35K.
 
-```{r, echo=F, warning=F, cut_LoanOriginalAmount_trans}
+```{r, echo=F, warning=F, message=F, cut_LoanOriginalAmount_trans}
 df$LoanOriginalAmount.bucket <- as.factor(cut(df$LoanOriginalAmount, breaks = c(1000, 5000, 10000, 15000, 20000, 25000, 35000)))
 
 qplot(x = BorrowerAPR, data = subset(df, !is.na(LoanOriginalAmount.bucket)), binwidth = 0.01) + 
   facet_wrap(~ LoanOriginalAmount.bucket, ncol = 2,
              scales = 'free_y')
 ```
+
+The above faceted histograms confirmed this pattern. This indicates that the fewer APR options when quoting larger loans. 
 
 
 # Bivariate Analysis
@@ -606,12 +622,12 @@ The ProsperScore is strongly correlated with interest-related variables, particu
 
 
 # Multivariate Plots Section
-```{r, echo=F, warning=F, categorize_ps}
+```{r, echo=F, warning=F, message=F, categorize_ps}
 df$ProsperScore.bucket <- cut(df$ProsperScore, breaks = c(0, 2, 5, 9, 11))
 
 ```
 
-```{r, echo=F, warning=F, PS_v_BorrowerAPR_IncomeRange, fig.width=10}
+```{r, echo=F, warning=F, message=F, PS_v_BorrowerAPR_IncomeRange, fig.width=10}
 ggplot(data = df) + 
   geom_point(aes(x = BorrowerAPR, y = StatedMonthlyIncome, 
                  color = ProsperScore.bucket),
@@ -624,7 +640,7 @@ ggplot(data = df) +
 
 The scatter plot confirms that with increase of ProsperScore, the BorrowerAPR tends to be lower. However, there seems to be no obvious correlation between StatedMonthlyIncome and the ProsperScore. 
 
-```{r, echo=F, warning=F, PS_v_BorrowerAPR_CreditScoreRangeLower, fig.width=10}
+```{r, echo=F, warning=F, message=F, PS_v_BorrowerAPR_CreditScoreRangeLower, fig.width=10}
 ggplot(data = df) + 
   geom_point(aes(x = BorrowerAPR, y = CreditScoreRangeLower, 
                  color = ProsperScore.bucket),
@@ -635,7 +651,7 @@ ggplot(data = df) +
 
 ```
 
-```{r, echo=F, warning=F, PS_v_BorrowerAPR_CreditScoreRangeLower2, fig.width=10}
+```{r, echo=F, warning=F, message=F, PS_v_BorrowerAPR_CreditScoreRangeLower2, fig.width=10}
 df$CreditScoreRangeLower.bucket <- cut(df$CreditScoreRangeLower, breaks = seq(600, 800, 50))
 ggplot(data = df) + 
   geom_point(aes(x = ProsperScore, y = BorrowerAPR, 
@@ -648,7 +664,7 @@ ggplot(data = df) +
 
 It seems that the CreditScoreRangeLower present a negative linear correlation (though a bit weak) with BorrowerAPR. Also, BorrowerAPR is within a smaller range with larger median values and more lower ProsperScore when the CreditScoreRangeLower is small.
 
-```{r, echo=F, warning=F, PS_v_EstimatedEffectiveYield, fig.width=10}
+```{r, echo=F, warning=F, message=F, PS_v_EstimatedEffectiveYield, fig.width=10}
 ggplot(data = df) + 
   geom_point(aes(x = BorrowerAPR, y = EstimatedEffectiveYield, 
                  color = ProsperScore.bucket),
@@ -659,16 +675,17 @@ ggplot(data = df) +
 
 The distribution for BorrowerAPR and EstimatedEffectiveYield is clearly consisted of multiple straight lines. On the direction from top left to bottom right, the ProsperScore tends to be decreasing but seems to be bimodal or multimodal for lower range scores (1-5). 
 
-```{r, echo=F, warning=F, PS_v_LenderYield, fig.width=10}
+```{r, echo=F, warning=F, message=F, PS_v_LenderYield, fig.width=10}
 ggplot(data = df) + 
   geom_point(aes(x = BorrowerAPR, y = LenderYield, 
                  color = ProsperScore.bucket),
              alpha = 0.5) +
   scale_color_brewer(type = 'div')
-
 ```
 
-```{r, echo=F, warning=F, interest_var_scatter_matrix, fig.width=12, fig.height=12}
+Again it is noticably true that the distribution is consisted of multiple linear relationships, but the separation is not that obvious. 
+
+```{r, echo=F, warning=F, message=F, interest_var_scatter_matrix, fig.width=12, fig.height=12}
 # set seed to fix the randomness
 set.seed(888)
 
@@ -693,7 +710,7 @@ ggpairs(df.samp[, vars])
 
 Above scatter matrix presents the correlations between the interest variables. BorrowerAPR and LenderYield posed a strong linear relationship. 
 
-```{r, echo=F, warning=F, modelling}
+```{r, echo=F, warning=F, message=F, modelling}
 # create a linear model and update the model variables
 m1 <- lm(ProsperScore ~ BorrowerAPR, data = df)
 m2 <- update(m1, . ~ . + DebtToIncomeRatio + log(StatedMonthlyIncome))
@@ -702,7 +719,11 @@ m4 <- update(m3, . ~ . + OpenRevolvingAccounts + CurrentDelinquencies + AmountDe
                DelinquenciesLast7Years)
 m5 <- update(m4, . ~ . + EstimatedEffectiveYield + EstimatedLoss + EstimatedReturn)
 mtable(m1, m2, m3, m4, m5)
+```
 
+The results of the model seems to be quite bad as it only predicts 17% of the correct ProsperScore. 
+
+```{r, echo=F, warning=F, message=F, modelling2}
 # predict new data with the best model (m4)
 df$ProsperScore.pred <- as.integer(predict(m4, newdata = df))
 table(na.omit(ifelse(df$ProsperScore - df$ProsperScore.pred != 0, 0, 1)))
@@ -720,7 +741,7 @@ grid.arrange(
 )
 ```
 
-The results of the model seems to be quite bad as it only predicts 17% of the correct ProsperScore. It doesn't predict correctly for loans with ProsperScore over 9 and equal to 1.
+The reason for the underperformance is that the model doesn't predict correctly for loans with ProsperScore over 9 and equal to 1.
 
 
 # Multivariate Analysis
@@ -742,33 +763,59 @@ Yes, I created a linear model with the dataset. The main strength of the model i
 # Final Plots and Summary
 
 ### Plot One
-```{r echo = F, warning = F, Plot_One, fig.width=10, fig.height=10}
+```{r echo = F, warning = F, message=F, Plot_One, fig.width=12, fig.height=12, dpi=200}
+# Helper function to label ProsperScoret
+label_prosper_score <- function (x) {
+  paste(c('ProsperScore = ', x), collapse = '')
+}
+
 # create labels for facted plots
-df$ProsperScore.label <- sapply(df$ProsperScore, function (x) {
-  paste('ProsperScore = ', x)
-})
+df$ProsperScore.label <- as.factor(sapply(df$ProsperScore, label_prosper_score))
+
+# reorder the label levels in case it is ordered oddly when faceting ProsperScore
+prosper_score_labels <- c(
+  "ProsperScore = 1",
+  "ProsperScore = 2",
+  "ProsperScore = 3",
+  "ProsperScore = 4",
+  "ProsperScore = 5",
+  "ProsperScore = 6",
+  "ProsperScore = 7",
+  "ProsperScore = 8",
+  "ProsperScore = 9",
+  "ProsperScore = 10",
+  "ProsperScore = 11",
+  "ProsperScore = NA"
+)
+df$ProsperScore.label <- factor(sapply(df$ProsperScore, label_prosper_score), 
+                                levels = prosper_score_labels)
 
 # main plot
 ggplot(data = df) + 
   geom_histogram(aes(x = BorrowerAPR), binwidth = 0.01, fill=I('blue')) + 
+  geom_vline(aes(xintercept = 0.357), linetype=2, alpha = 0.7, 
+             color = I('red')) +
   ggtitle('BorrowerAPR by ProsperScore') +
   scale_x_continuous(breaks = seq(0, 0.5, 0.1)) + 
   ylab('Number of Loans') +
-  facet_wrap(~ ProsperScore.label, scales = 'free_y', ncol = 3) 
+  facet_wrap(~ ProsperScore.label, scales = 'free_y', ncol = 3)
 
 ```
 
 ### Description One
-The distribution of BorrowerAPR shifts from right to left with increase of ProsperScore, which indicates a negative correlation between ProsperScore and BorrowerAPR. It also shows there are a few peak values with BorrowerAPR near 0.36 for ProsperScore within 2-5. 
+I have chosen this plot because it is reflective to show how the distribution of Borrower APR changes at different Prosper Scores.
+
+This faceted histogram presents a clear negative relationship between Borrower APR and Prosper Score. The former is generally low at higher Prosper Score, as the peak of the APR distribution shifts from right to left as Prosper Score increases. However, it is surprising that there are some loans with oddly high APR near 36% even though the Prosper Score is within a lower range (2-5). 
 
 
 ### Plot Two
-```{r echo = F, warning = F, Plot_Two, dpi=200, fig.width=12, fig.height=8}
+```{r echo = F, warning = F, message=F,Plot_Two, dpi=200, fig.width=12, fig.height=8}
 # main plot
 qplot(data = subset(df, !is.na(df$ProsperScore)),
       x = as.factor(ProsperScore), y = StatedMonthlyIncome,
       geom = 'boxplot', fill = as.factor(ProsperScore)) + 
   scale_y_log10(breaks = c(1000, 5000, 10000, 20000)) + 
+  ggtitle('Stated Monthly Income vs Prosper Score') +
   xlab('ProsperScore') + 
   ylab('StatedMonthlyIncome') +
   coord_cartesian(ylim = c(1000, 20000)) + 
@@ -776,11 +823,11 @@ qplot(data = subset(df, !is.na(df$ProsperScore)),
 ```
 
 ### Description Two
-StatedMonthlyIncome tends to be higher with increase of the Prosper Score except for ProsperScore of 1 which has higher income than Score 2 and even 5. 
+I have chosen this boxplot as it clearly demonstrates a positive correlation between monthly income and Prosper Score (though the correlation is weak, only around 0.084). The plot shows that the monthly income is generally higher given a higher Prosper Score. The only exception is the prosper score at 1, when the monthly income is slightly higher than score of 2-5, which is possibly because of income overstatement or non-verifiable issues.
 
 
 ### Plot Three
-```{r echo = F, warning = F, Plot_Three, dpi=200, fig.width=12, fig.height=8}
+```{r echo = F, warning = F, message=F,Plot_Three, dpi=200, fig.width=12, fig.height=8}
 # Group dataset by LoanOriginationDate.date for line plot
 df.loans_by_date <- group_by(df, LoanOriginationDate.date) %>%
   summarise(n = n()) %>%
@@ -799,7 +846,10 @@ ggplot(data = df.loans_by_date,
 ```
 
 ### Description Three
-The number of Prosper loans originated increase since 2006 and stumbled to 0 since end of 2008 as a result of the 2008 Global Finacial Crisis. Since the year end of 2009, the loans started to be originated again and climbed to 100 per day during the 3rd quarter in 2012 then dropped to 50 due to 2012 Financial Crisis. Loans originated per day then had a significant jump from 50 to over 250 in 2013.
+I chose this time series plot because it tells a story about the Great [Resessions of 2008-2012](https://en.wikipedia.org/wiki/Great_Recession). 
+
+The number of loans originated increases since 2006 and stumbled to 0 since the end of 2008, as a result of the 2008 Global Finacial Crisis. Since the year end of 2009, the loans started to recover and climbed to 100 per day during the 3rd quarter in 2012 until dropping to 50 due to the 2012 Financial Crisis. Since 2013, loans started to increase and had a significant jump from 50 to 4 times more over the next 12 months.
+
 
 ------
 
