@@ -1,0 +1,9 @@
+*.pyc
+enron_mail_20110402.tgz
+enron_mail_20110402/
+enron_mail_20150507.tgz
+maildir/
+*.csv
+*.pkl
+.ipynb_checkpoints
+emails_by_address/
