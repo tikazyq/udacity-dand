@@ -10,7 +10,7 @@ The goal of this project is to apply machine learning algorithms to build a pred
 
 **Outliers**. The dataset contains 1 extreme outlier on the top right which was identified when I plotted the scatter plot of salary vs bonus. A further investigation shows this outlier is due to the invalid input entry from the spreadsheet, i.e. “TOTAL”. I removed this outlier as it is not relevant for prediction. The outlier is removed by the code ```data_dict.pop('TOTAL')```
 
-(figure 1 salary vs bonus)
+![figure 1 salary vs bonus](figures/figure_1_salary_vs_bonus.png)
 
 **Missing Values**. There are quite a few missing values in each features. A summary table of those missing values are as below. 
 
@@ -44,7 +44,7 @@ What algorithm did you end up using? What other one(s) did you try? [relevant ru
 
 **Feature Selection**. I used *SelectKBest* to fit the original data and obtained the scores of the features shown as the below graph. I chose the top 10 variables as the selected features. 
 
-(figure 2 feature score with SelectKBest)
+![figure 2 feature score with SelectKBest](figures/figure_2_feature_selection.png)
 
 **Feature Scaling**. As the importances of the features selection process would be affected by the scale, e.g. salary vs number of emails, I used *MinMaxScaler* for scale the features during the feature selection process using *SelectKBest*. However, as the chosen algorithms do not require feature scaling, I didn't use feature scaling in the training and prediction process. The chosen algorithms are *DecisionTreeClassifier*, *RandomForestClassifier*, *LogisticRegression*, *SGDClassifier*. 
 

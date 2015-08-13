@@ -7,12 +7,11 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 
-os.chdir("/Users/yeqing/projects/notebook/udacity/dand/proj4/final_project")
-sys.path.append("/Users/yeqing/projects/notebook/udacity/dand/proj4/tools")
-sys.path.append("/Users/yeqing/projects/notebook/udacity/dand/proj4/final_project")
+basedir = os.path.dirname(__file__)
+os.chdir("../scripts")
+sys.path.append(os.path.abspath(os.path.join(basedir, '../tools')))
 
 from feature_format import featureFormat, targetFeatureSplit
-from tester import test_classifier, dump_classifier_and_data
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -23,17 +22,6 @@ financial_vars = ['salary', 'deferral_payments', 'total_payments', 'loan_advance
 email_vars = ['to_messages', 'from_poi_to_this_person', 'from_messages', 'from_this_person_to_poi',
               'shared_receipt_with_poi']
 label_vars = ['poi']
-# features_list = [
-#     'poi',
-#     'salary',
-#     'total_payments',
-#     'bonus',
-#     'total_stock_value',
-#     'expenses',
-#     'exercised_stock_options',
-#     'from_poi_to_this_person',
-#     'to_messages',
-# ]
 
 features_list = label_vars + financial_vars + email_vars
 
@@ -53,18 +41,14 @@ data = scalar.fit_transform(data)
 
 labels, features = targetFeatureSplit(data)
 
-from sklearn.feature_selection import GenericUnivariateSelect, SelectKBest, f_regression
-from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import f_regression
 
-from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_selection import SelectKBest
 
-# clf = SelectKBest(f_regression)
-clf = DecisionTreeClassifier()
+clf = SelectKBest(f_regression)
 clf.fit(features, labels)
 
-# scores = clf.scores_
-scores = clf.feature_importances_
+scores = clf.scores_
 indices = np.argsort(scores)[::-1]
 
 import matplotlib.pyplot as plt
@@ -80,8 +64,5 @@ plt.setp(labels, rotation=90)
 plt.title('Feature Scores with SelectKBest')
 plt.ylabel('feature score')
 plt.tight_layout()
-plt.savefig('feature_selection_SelectKBest.png')
+plt.savefig('../figures/figure_2_feature_selection.png')
 plt.show()
-
-for i in indices:
-    print '\n'.join([features[i], scores[i], clf.feature_importances_[i]])
