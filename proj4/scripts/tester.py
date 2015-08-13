@@ -67,7 +67,26 @@ def test_classifier(clf, dataset, feature_list, folds = 1000):
         print RESULTS_FORMAT_STRING.format(total_predictions, true_positives, false_positives, false_negatives, true_negatives)
         print ""
 
+        print 'F1 scores:'
+        for params, mean_score, scores in clf.grid_scores_:
+            print("%0.3f (+/-%0.03f) for %r"
+                % (mean_score, scores.std() / 2, params))
+        print ''
+        print 'Best score: {}\tBest params: {}'.format(clf.best_score_, clf.best_params_)
+        print ''
+
+        ### Print feature importances
+        if clf.estimator.feature_importances_ is not None:
+            print 'Feature importances:'
+            try:
+                clf.estimator.fit(features_train, labels_train)
+            except:
+                pass
+            for i, feature in enumerate(feature_list[1:]):
+                print '{}: {:.4f}'.format(feature, clf.estimator.feature_importances_[i])
+
         return {
+            'clf': clf.__str__,
             'total_predictions':total_predictions,
             'accuracy':accuracy,
             'precision':precision,

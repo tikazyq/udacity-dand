@@ -7,9 +7,9 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 
-os.chdir("/Users/yeqing/projects/notebook/udacity/dand/proj4/ud120-projects/final_project")
-sys.path.append("/Users/yeqing/projects/notebook/udacity/dand/proj4/ud120-projects/tools")
-sys.path.append("/Users/yeqing/projects/notebook/udacity/dand/proj4/ud120-projects/final_project")
+os.chdir("/Users/yeqing/projects/notebook/udacity/dand/proj4/final_project")
+sys.path.append("/Users/yeqing/projects/notebook/udacity/dand/proj4/tools")
+sys.path.append("/Users/yeqing/projects/notebook/udacity/dand/proj4/final_project")
 
 from feature_format import featureFormat, targetFeatureSplit
 from tester import test_classifier, dump_classifier_and_data
@@ -45,29 +45,43 @@ data_dict.pop('TOTAL')
 my_dataset = data_dict
 
 data = featureFormat(my_dataset, features_list, sort_keys=True)
+
+# scale the features
+from sklearn.preprocessing import MinMaxScaler
+scalar = MinMaxScaler()
+data = scalar.fit_transform(data)
+
 labels, features = targetFeatureSplit(data)
 
-from sklearn.feature_selection import GenericUnivariateSelect, SelectKBest
+from sklearn.feature_selection import GenericUnivariateSelect, SelectKBest, f_regression
 from sklearn.linear_model import LogisticRegression
 
 from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.feature_selection import SelectKBest
 
-clf = ExtraTreesClassifier()
+# clf = SelectKBest(f_regression)
+clf = DecisionTreeClassifier()
 clf.fit(features, labels)
 
-importances = clf.feature_importances_
-indices = np.argsort(importances)[::-1]
+# scores = clf.scores_
+scores = clf.feature_importances_
+indices = np.argsort(scores)[::-1]
 
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_style('whitegrid')
 
 n = len(indices)
-plt.bar(range(n), importances[indices])
+plt.bar(range(n), scores[indices])
 plt.xticks(range(n), np.array(features_list)[1:][indices])
 locs, labels = plt.xticks()
 plt.setp(labels, rotation=90)
-plt.title('Feature Importance with ExtraTreesClassifier')
-plt.ylabel('feature importance')
+plt.title('Feature Scores with SelectKBest')
+plt.ylabel('feature score')
 plt.tight_layout()
-plt.savefig('feature_selection_ExtraTreesClassifier.png')
+plt.savefig('feature_selection_SelectKBest.png')
 plt.show()
 
+for i in indices:
+    print '\n'.join([features[i], scores[i], clf.feature_importances_[i]])
