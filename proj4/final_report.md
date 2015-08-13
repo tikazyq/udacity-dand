@@ -1,15 +1,8 @@
-Enron Submission Free-Response Questions
+#Project 4 - Identify Fraud from Enron Email
 
-A critical part of machine learning is making sense of your analysis process, and communicating it to others.  The questions below will help us understand your decision-making process and allow us to give feedback on your project.  Please answer each question; your answers should be 1-2 paragraphs per question.  If you find yourself writing much more than that, take a step back and see if you can simplify your response!
+###Question 1
 
-When your coach evaluates your responses, he or she will use a specific list of rubric items to assess your answers.  Here is the link to that rubric: Link to the rubric
-Each question has one or more specific rubric items associated with it, so before you submit an answer, take a look at that the rubric.  If your response does not meet expectations, you will be asked to resubmit.
-
-Once you’ve submitted your responses, your coach will take a look and ask a few more focused follow-up questions on one or more of your answers.  
-
-We can’t wait to see what you’ve put together for this project!
-
-**1. Summarize for us the goal of this project and how machine learning is useful in trying to accomplish it. As part of your answer, give some background on the dataset and how it can be used to answer the project question. Were there any outliers in the data when you got it, and how did you handle those?  [relevant rubric items: “data exploration”, “outlier investigation”]**
+**Summarize for us the goal of this project and how machine learning is useful in trying to accomplish it. As part of your answer, give some background on the dataset and how it can be used to answer the project question. Were there any outliers in the data when you got it, and how did you handle those?  [relevant rubric items: “data exploration”, “outlier investigation”]**
 
 The goal of this project is to apply machine learning algorithms to build a prediction model that can classify the Person of Interest (POI) in [the 2001 Enron Scandal](https://en.wikipedia.org/wiki/Enron_scandal). 
 
@@ -45,7 +38,8 @@ to\_messages | 86 | 60
 total\_payments | 125 | 21
 total\_stock\_value | 126 | 20
 
-**2. What features did you end up using in your POI identifier, and what selection process did you use to pick them?  Did you have to do any scaling?  Why or why not?  As part of the assignment, you should attempt to engineer your own feature that doesn’t come ready-made in the dataset--explain what feature you tried to make, and the rationale behind it.  (You do not necessarily have to use it in the final analysis, only engineer and test it.)  If you used an algorithm like a decision tree, please also give the feature importances of the features that you use.  [relevant rubric items: “create new features”, “properly scale features”, “intelligently select feature”]
+###Question 2
+**What features did you end up using in your POI identifier, and what selection process did you use to pick them?  Did you have to do any scaling?  Why or why not?  As part of the assignment, you should attempt to engineer your own feature that doesn’t come ready-made in the dataset--explain what feature you tried to make, and the rationale behind it.  (You do not necessarily have to use it in the final analysis, only engineer and test it.)  If you used an algorithm like a decision tree, please also give the feature importances of the features that you use.  [relevant rubric items: “create new features”, “properly scale features”, “intelligently select feature”]
 What algorithm did you end up using? What other one(s) did you try? [relevant rubric item: “pick an algorithm”]**
 
 **Feature Selection**. I used *SelectKBest* to fit the original data and obtained the scores of the features shown as the below graph. I chose the top 10 variables as the selected features. 
@@ -90,13 +84,15 @@ loan\_advances | 0.0000
 
 According to the table, it shows that the exercised\_stock\_options has the most importance while salary, deferred\_income, long\_term\_incentive, restricted\_stock and loan\_advances have no importance. 
 
-**3. What does it mean to tune the parameters of an algorithm, and what can happen if you don’t do this well?  How did you tune the parameters of your particular algorithm?  (Some algorithms don’t have parameters that you need to tune--if this is the case for the one you picked, identify and briefly explain how you would have done it if you used, say, a decision tree classifier). [relevant rubric item: “tune the algorithm”]**
+###Question 3
+**What does it mean to tune the parameters of an algorithm, and what can happen if you don’t do this well?  How did you tune the parameters of your particular algorithm?  (Some algorithms don’t have parameters that you need to tune--if this is the case for the one you picked, identify and briefly explain how you would have done it if you used, say, a decision tree classifier). [relevant rubric item: “tune the algorithm”]**
 
 The parameters tuning is a process of finding the most optimum parameters to fit machine learning algorithms in order to achieve the best performances. Lack of this process may result in non-optimum performances such as accuracy, precision or recall. 
 
 I used the *GridSearch* to optimise the parameters for the best f1 score, which is the harmonic mean of precision and recall. I used f1 score, the harmonic mean of precision and recall, because both precision and recall need to be above 0.3. 
 
-**4. What is validation, and what’s a classic mistake you can make if you do it wrong?  How did you validate your analysis?  [relevant rubric item: “validation strategy”]
+###Question 4
+**What is validation, and what’s a classic mistake you can make if you do it wrong?  How did you validate your analysis?  [relevant rubric item: “validation strategy”]
 Give at least 2 evaluation metrics, and your average performance for each of them.  Explain an interpretation of your metrics that says something human-understandable about your algorithm’s performance. [relevant rubric item: “usage of evaluation metrics”]**
 
 Validation is the process of evaluating the performance of tuned classifiers against the evaluation metrics selected. A classic mistake is that the classifier might be overfitted if this process is done in a wrong way, e.g. training data size is too large. The overfitting will result in the overperforming of training data but poor performance of the test data. 
